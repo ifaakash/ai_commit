@@ -1,15 +1,44 @@
+import os
 import subprocess
-from pydoc import text
 
 import requests
+from dotenv import load_dotenv
 
 
 def get_diff():
-    diff = subprocess.run(["git", "diff", "--cached"], capture_output=True, text=True)
-    return diff.stdout
+    try:
+        # Added check=True to raise an exception on non-zero exit code
+        diff = subprocess.run(
+            ["git", "diff", "--cached"], capture_output=True, text=True, check=True
+        )
+        return diff.stdout
+    except subprocess.CalledProcessError as e:
+        print(
+            f"Error running 'git diff --cached'. Is this a Git repository? Details: {e.stderr.strip()}"
+        )
+        return ""
+    except FileNotFoundError:
+        print(
+            "Error: 'git' command not found. Ensure Git is installed and in your PATH."
+        )
+        return ""
 
 
 def generate_message(git_diff: str):
+    api_key = os.environ.get("DEEPSEEK_API_KEY")
+
+    if not api_key:
+        print(
+            "API key not found. Please set the DEEPSEEK_API_KEY environment variable."
+        )
+        return ""
+
+    url = "https://api.deepseek.com/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
     prompt = f"""
     You are a helpful assistant that writes concise Git commit messages.
 
@@ -17,12 +46,6 @@ def generate_message(git_diff: str):
 
     {git_diff}
     """
-
-    url = "https://api.deepseek.com/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer ${{secrets.API_KEY}}",
-    }
 
     # Call AI model to generate commit message
     data = {
@@ -44,11 +67,20 @@ def generate_message(git_diff: str):
 
 
 if __name__ == "__main__":
+    # Call the environment variable loader function
+    load_dotenv()
+
+    commit_message = ""
+
+    # Call the function to fetch the difference from the last commit
     diff = get_diff()
+    print(diff)
 
     if not diff.strip():
-        print("No staged changes. Commit message will be empty.")
+        commit_message = "No staged changes. Commit message will be empty"
         exit(0)
+    else:
+        # If difference is not empty, generate the commit message
+        commit_message = generate_message(diff)
 
-    commit_message = generate_message(diff)
     print(commit_message)

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+echo "--- Pre-commit Hook Triggered ---" > /dev/tty
+# Ensure we are in the root of the repository
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+set -e
+COMMIT_MSG=$(python3 src/generate_commit.py)
+set +e
+
+echo "-----------------------------------" > /dev/tty
+
+if [[ -z "$(echo "$COMMIT_MSG" | tr -d '[:space:]')" ]]; then
+    echo "ERROR: Generated commit message is empty. Aborting commit." > /dev/tty
+    echo "-----------------------------------" > /dev/tty
+    exit 1
+fi
+
+echo "Suggested Commit Message: $COMMIT_MSG"
+
+echo
+echo "-----------------------------------" > /dev/tty
+
+read -r -p "Do you want to keep this commit message (y/n)? " confirm < /dev/tty
+
+if [ "$confirm" == "y" ]; then
+    echo "$COMMIT_MSG" > .git/COMMIT_EDITMSG
+    echo "Commit message successfully generated and set." > /dev/tty
+    exit 0
+else
+    echo "Commit message discarded. Aborting commit." > /dev/tty
+    exit 1
+fi
