@@ -1,86 +1,110 @@
 import os
 import subprocess
+import sys
 
 import requests
 from dotenv import load_dotenv
 
+# --- Configuration ---
+# Use environment variables for flexibility
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-reasoner")
 
-def get_diff():
+
+def get_diff() -> str:
+    """Runs 'git diff --cached' and handles subprocess errors."""
     try:
-        # Added check=True to raise an exception on non-zero exit code
+        # check=True raises an exception on non-zero exit code
         diff = subprocess.run(
             ["git", "diff", "--cached"], capture_output=True, text=True, check=True
         )
         return diff.stdout
     except subprocess.CalledProcessError as e:
-        print(
-            f"Error running 'git diff --cached'. Is this a Git repository? Details: {e.stderr.strip()}"
+        sys.stderr.write(
+            f"ERROR: Git command failed. Is this a Git repo? Details: {e.stderr.strip()}\n"
         )
         return ""
     except FileNotFoundError:
-        print(
-            "Error: 'git' command not found. Ensure Git is installed and in your PATH."
+        sys.stderr.write(
+            "ERROR: 'git' command not found. Ensure Git is in your PATH.\n"
         )
         return ""
 
 
-def generate_message(git_diff: str):
+def generate_message(git_diff: str) -> str:
+    """Calls the DeepSeek API to generate a commit message."""
+
     api_key = os.environ.get("DEEPSEEK_API_KEY")
 
     if not api_key:
-        print(
-            "API key not found. Please set the DEEPSEEK_API_KEY environment variable."
+        sys.stderr.write(
+            "ERROR: API key not found. Please set the DEEPSEEK_API_KEY environment variable.\n"
         )
         return ""
 
     url = "https://api.deepseek.com/chat/completions"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}",
+        "Authorization": f"Bearer {api_key}",  # Removed the extra $
     }
 
     prompt = f"""
     You are a helpful assistant that writes concise Git commit messages.
+    Write a commit message that describes the following diff.
+    The message must follow the Conventional Commit format (e.g., feat: added new endpoint).
 
-    Write a commit message that describes the following diff:
-
+    Diff:
     {git_diff}
     """
 
-    # Call AI model to generate commit message
     data = {
-        "model": "deepseek-reasoner",  # Use 'deepseek-reasoner' for R1 model or 'deepseek-chat' for V3 model
+        "model": DEEPSEEK_MODEL,
         "messages": [{"role": "system", "content": prompt}],
-        "stream": False,  # Disable streaming
+        "stream": False,
     }
 
-    response = requests.post(url, headers=headers, json=data)
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=120)
+        # Raise HTTPError for bad responses (4xx or 5xx)
+        response.raise_for_status()
 
-    if response.status_code == 200:
         result = response.json()
-        message = result["choices"][0]["message"]["content"]
-    else:
-        print("Request failed, error code:", response.status_code)
-        message = ""
 
-    return message
+        # Extract message content
+        message = (
+            result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        )
+
+        if not message:
+            sys.stderr.write(
+                "ERROR: API response was successful but returned no message content.\n"
+            )
+            return ""
+
+        return message
+
+    except requests.exceptions.RequestException as e:
+        sys.stderr.write(f"ERROR: API request failed. Network or HTTP Error: {e}\n")
+        return ""
 
 
 if __name__ == "__main__":
-    # Call the environment variable loader function
+    # Load environment variables once at the start
     load_dotenv()
 
-    commit_message = ""
-
-    # Call the function to fetch the difference from the last commit
     diff = get_diff()
-    print(diff)
 
     if not diff.strip():
-        commit_message = "No staged changes. Commit message will be empty"
+        # Only print status if there's no diff, otherwise it pollutes the output
+        sys.stderr.write(
+            "INFO: No staged changes found. Commit message will be empty.\n"
+        )
+        # Exit silently so the hook doesn't necessarily abort the commit if it's fine to proceed
+        # but in a pre-commit context, often you want to abort if there's no diff.
+        # We rely on the shell script to check the final output.
+        print("")  # Print empty string to STDOUT
         exit(0)
-    else:
-        # If difference is not empty, generate the commit message
-        commit_message = generate_message(diff)
 
+    commit_message = generate_message(diff)
+
+    # Print the final, clean message to STDOUT for the hook to capture
     print(commit_message)
