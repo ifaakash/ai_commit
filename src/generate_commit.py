@@ -9,6 +9,10 @@ from dotenv import load_dotenv
 # Use environment variables for flexibility
 DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-reasoner")
 
+# 1. Initialize a requests Session object at the module level
+# This object will be reused for all requests to the same host.
+SESSION = requests.Session()
+
 
 def get_diff() -> str:
     """Runs 'git diff --cached' and handles subprocess errors."""
@@ -31,7 +35,7 @@ def get_diff() -> str:
 
 
 def generate_message(git_diff: str) -> str:
-    """Calls the DeepSeek API to generate a commit message."""
+    """Calls the DeepSeek API using the shared session to generate a commit message."""
 
     api_key = os.environ.get("DEEPSEEK_API_KEY")
 
@@ -44,7 +48,7 @@ def generate_message(git_diff: str) -> str:
     url = "https://api.deepseek.com/chat/completions"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}",  # Removed the extra $
+        "Authorization": f"Bearer {api_key}",
     }
 
     prompt = f"""
@@ -63,7 +67,10 @@ def generate_message(git_diff: str) -> str:
     }
 
     try:
-        response = requests.post(url, headers=headers, json=data, timeout=120)
+        # 2. Use SESSION.post() instead of requests.post()
+        # This reuses the underlying connection if possible.
+        response = SESSION.post(url, headers=headers, json=data, timeout=120)
+
         # Raise HTTPError for bad responses (4xx or 5xx)
         response.raise_for_status()
 
@@ -108,3 +115,6 @@ if __name__ == "__main__":
 
     # Print the final, clean message to STDOUT for the hook to capture
     print(commit_message)
+
+    # 3. Explicitly close the session's underlying connections when done
+    SESSION.close()
