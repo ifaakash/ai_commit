@@ -7,6 +7,9 @@ import requests
 import typer
 from dotenv import load_dotenv
 
+# Load .env file variables before running the application
+load_dotenv(override=True)
+
 # Initialize Typer App
 app = typer.Typer(
     help="AI Commit Message Generator. Reads staged Git diff and suggests a message"
@@ -14,6 +17,73 @@ app = typer.Typer(
 
 # Initialize requests Session object globally for connection reuse
 SESSION = requests.Session()
+
+# --- NEW Hook Installation Command ---
+
+# Multiline string containing the content of your shell script (Step 1)
+HOOK_SCRIPT_CONTENT = """#!/usr/bin/env bash
+COMMIT_MSG_FILE=$1
+echo "--- Prepare-Commit-Message Hook Triggered ---" > /dev/tty
+cd "$(git rev-parse --show-toplevel)" || exit 1
+EXISTING_MSG=$(grep -v '^#' "$COMMIT_MSG_FILE" | head -n 1 | tr -d '[:space:]')
+if [[ -n "$EXISTING_MSG" ]]; then
+    echo "INFO: User provided an existing message. Skipping AI generation." > /dev/tty
+    exit 0
+fi
+set -e
+GENERATED_MSG=$(ai-commit generate)
+set +e
+if [[ -z "$(echo "$GENERATED_MSG" | tr -d '[:space:]')" ]]; then
+    echo "ERROR: Generated message is empty. Manual edit required." > /dev/tty
+    exit 1
+fi
+echo "$GENERATED_MSG" > "$COMMIT_MSG_FILE"
+echo "INFO: Successfully generated and set the commit message." > /dev/tty
+echo "--- Generated Message ---" > /dev/tty
+echo "$GENERATED_MSG" > /dev/tty
+echo "-------------------------" > /dev/tty
+exit 0
+"""
+
+
+@app.command(name="install")
+def install_hook():
+    """Installs the prepare-commit-msg hook in the current Git repository."""
+    try:
+        # Check if we are in a Git repository
+        git_dir = subprocess.run(
+            ["git", "rev-parse", "--git-dir"],
+            capture_output=True,
+            check=True,
+            text=True,
+        ).stdout.strip()
+
+        hook_path = os.path.join(git_dir, "hooks", "prepare-commit-msg")
+
+        with open(hook_path, "w") as f:
+            f.write(HOOK_SCRIPT_CONTENT)
+
+        # Make the hook executable
+        os.chmod(hook_path, 0o755)
+
+        typer.echo(
+            typer.style(
+                f"\n✅ Successfully installed hook in {hook_path}",
+                fg=typer.colors.GREEN,
+                bold=True,
+            )
+        )
+        typer.echo("Run 'git commit' in this repository to test.")
+
+    except subprocess.CalledProcessError:
+        typer.echo(
+            typer.style(
+                "❌ ERROR: Not in a Git repository. Installation aborted.",
+                fg=typer.colors.RED,
+            ),
+            err=True,
+        )
+        raise typer.Exit(code=1)
 
 
 # --- Utility Functions ---
@@ -166,8 +236,6 @@ def cli_generate(
 
 
 if __name__ == "__main__":
-    # Load .env file variables before running the application
-    load_dotenv(override=True)
     try:
         app()
     finally:

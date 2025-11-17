@@ -22,9 +22,9 @@ fi
 
 # Set -e to exit on non-zero exit code from python (error/failure)
 set -e
-# Execute Python script and capture only the suggested commit message (printed to STDOUT).
-# Errors/debug messages printed to STDERR by Python are sent directly to /dev/tty.
-GENERATED_MSG=$(python3 src/generate_commit.py)
+# Execute the installed CLI command 'ai-commit', using the 'generate' command
+# This ensures it works regardless of the current working directory.
+GENERATED_MSG=$(ai-commit generate)
 set +e
 
 # Check if the output is empty or whitespace only
