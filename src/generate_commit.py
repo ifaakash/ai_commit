@@ -31,7 +31,7 @@ if [[ -n "$EXISTING_MSG" ]]; then
     exit 0
 fi
 set -e
-GENERATED_MSG=$(ai-commit generate)
+GENERATED_MSG=$(aicommitter generate)
 set +e
 if [[ -z "$(echo "$GENERATED_MSG" | tr -d '[:space:]')" ]]; then
     echo "ERROR: Generated message is empty. Manual edit required." > /dev/tty

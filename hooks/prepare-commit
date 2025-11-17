@@ -1,45 +1,22 @@
 #!/usr/bin/env bash
-
-# The path to the temporary commit message file is the first argument ($1)
 COMMIT_MSG_FILE=$1
-
-# --- Setup and Debugging ---
 echo "--- Prepare-Commit-Message Hook Triggered ---" > /dev/tty
-
-# Change to the repository root for consistent path resolution
 cd "$(git rev-parse --show-toplevel)" || exit 1
-
-# Check if the existing message file contains content (ignoring comments/whitespace).
-# If it does, a message was provided via -m, -F, or a previous run.
 EXISTING_MSG=$(grep -v '^#' "$COMMIT_MSG_FILE" | head -n 1 | tr -d '[:space:]')
-
 if [[ -n "$EXISTING_MSG" ]]; then
     echo "INFO: User provided an existing message. Skipping AI generation." > /dev/tty
-    exit 0 # Exit successfully, keeping the user's message.
+    exit 0
 fi
-
-# --- AI Message Generation ---
-
-# Set -e to exit on non-zero exit code from python (error/failure)
 set -e
-# Execute the installed CLI command 'ai-commit', using the 'generate' command
-# This ensures it works regardless of the current working directory.
-GENERATED_MSG=$(ai-commit generate)
+GENERATED_MSG=$(aicommitter generate)
 set +e
-
-# Check if the output is empty or whitespace only
 if [[ -z "$(echo "$GENERATED_MSG" | tr -d '[:space:]')" ]]; then
-    echo "ERROR: Generated message is empty. Commit aborted or manual edit required." > /dev/tty
-    exit 1 # Abort the message preparation, allowing the user to type manually.
+    echo "ERROR: Generated message is empty. Manual edit required." > /dev/tty
+    exit 1
 fi
-
-# 3. OVERWRITE the file with the generated message
 echo "$GENERATED_MSG" > "$COMMIT_MSG_FILE"
-
 echo "INFO: Successfully generated and set the commit message." > /dev/tty
-# Display the generated message for immediate feedback
 echo "--- Generated Message ---" > /dev/tty
 echo "$GENERATED_MSG" > /dev/tty
 echo "-------------------------" > /dev/tty
-
 exit 0
