@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-commit"
+version = "0.0.2"
+description = "AI powered commit message helper"
+authors = [{name = "ifaakash"}]
+requires-python = ">=3.11"
+
+dependencies = [
+  "typer[all]>=0.9.0",
+  "requests>=2.28",
+  "python-dotenv>=1.0",
+]
+
+[project.scripts]
+ai-commit = "generate_commit:app"

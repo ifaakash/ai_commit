@@ -4,7 +4,8 @@
 COMMIT_MSG_FILE=$1
 
 # --- Setup and Debugging ---
-echo "--- Prepare-Commit-Msg Hook Triggered ---" > /dev/tty
+echo "--- Prepare-Commit-Message Hook Triggered ---" > /dev/tty
+
 # Change to the repository root for consistent path resolution
 cd "$(git rev-parse --show-toplevel)" || exit 1
 

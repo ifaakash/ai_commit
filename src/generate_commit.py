@@ -1,47 +1,60 @@
 import os
 import subprocess
 import sys
+from subprocess import DEVNULL
 
 import requests
+import typer
 from dotenv import load_dotenv
 
-# --- Configuration ---
-# Use environment variables for flexibility
-DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-reasoner")
+# Initialize Typer App
+app = typer.Typer(
+    help="AI Commit Message Generator. Reads staged Git diff and suggests a message"
+)
 
-# 1. Initialize a requests Session object at the module level
-# This object will be reused for all requests to the same host.
+# Initialize requests Session object globally for connection reuse
 SESSION = requests.Session()
 
 
+# --- Utility Functions ---
 def get_diff() -> str:
-    """Runs 'git diff --cached' and handles subprocess errors."""
+    """Runs 'git diff --cached' and handles errors."""
     try:
-        # check=True raises an exception on non-zero exit code
+        # 1. First subprocess.run: Check if we are inside a Git repository
+        # Use stdout=DEVNULL and stderr=DEVNULL instead of capture_output=True
+        subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            stdout=DEVNULL,  # Discard stdout
+            stderr=DEVNULL,  # Discard stderr
+            check=True,  # Raise CalledProcessError if not in a git repo
+        )
+
+        # 2. Second subprocess.run: Get the actual diff
+        # Here, you DO want to capture output, so use capture_output=True
         diff = subprocess.run(
-            ["git", "diff", "--cached"], capture_output=True, text=True, check=True
+            ["git", "diff", "--cached"],
+            capture_output=True,  # Captures stdout and stderr
+            text=True,  # Decodes output to string
+            check=True,
         )
         return diff.stdout
-    except subprocess.CalledProcessError as e:
-        sys.stderr.write(
-            f"ERROR: Git command failed. Is this a Git repo? Details: {e.stderr.strip()}\n"
-        )
+    except subprocess.CalledProcessError:
+        typer.echo("Error: Git command failed. Are you in a Git repository?", err=True)
         return ""
     except FileNotFoundError:
-        sys.stderr.write(
-            "ERROR: 'git' command not found. Ensure Git is in your PATH.\n"
+        typer.echo(
+            "Error: 'git' command not found. Ensure Git is in your PATH.", err=True
         )
         return ""
 
 
-def generate_message(git_diff: str) -> str:
-    """Calls the DeepSeek API using the shared session to generate a commit message."""
-
-    api_key = os.environ.get("DEEPSEEK_API_KEY")
+def generate_message(git_diff: str, api_key: str, model_name: str) -> str:
+    """Calls the DeepSeek API to generate a commit message"""
 
     if not api_key:
-        sys.stderr.write(
-            "ERROR: API key not found. Please set the DEEPSEEK_API_KEY environment variable.\n"
+        typer.echo(
+            "Error: API key not set. Set DEEPSEEK_API_KEY environment variable.",
+            err=True,
         )
         return ""
 
@@ -53,68 +66,109 @@ def generate_message(git_diff: str) -> str:
 
     prompt = f"""
     You are a helpful assistant that writes concise Git commit messages.
-    Write a commit message that describes the following diff.
-    The message must follow the Conventional Commit format (e.g., feat: added new endpoint).
+    Write a commit message that describes the following diff, following Conventional Commit format.
 
     Diff:
     {git_diff}
     """
 
     data = {
-        "model": DEEPSEEK_MODEL,
+        "model": model_name,
         "messages": [{"role": "system", "content": prompt}],
         "stream": False,
     }
 
     try:
-        # 2. Use SESSION.post() instead of requests.post()
-        # This reuses the underlying connection if possible.
-        response = SESSION.post(url, headers=headers, json=data, timeout=120)
-
-        # Raise HTTPError for bad responses (4xx or 5xx)
+        # Use the global session object with a generous timeout
+        typer.echo("... Calling AI model for generation (This may take up to 60s) ...")
+        response = SESSION.post(url, headers=headers, json=data, timeout=60)
         response.raise_for_status()
 
         result = response.json()
-
-        # Extract message content
         message = (
             result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         )
 
         if not message:
-            sys.stderr.write(
-                "ERROR: API response was successful but returned no message content.\n"
-            )
+            typer.echo("Error: API returned no message content.", err=True)
             return ""
 
         return message
 
     except requests.exceptions.RequestException as e:
-        sys.stderr.write(f"ERROR: API request failed. Network or HTTP Error: {e}\n")
+        typer.echo(f"Error: API request failed. Network or HTTP Error: {e}", err=True)
         return ""
 
 
-if __name__ == "__main__":
-    # Load environment variables once at the start
-    load_dotenv()
+# --- Main Typer Command ---
+@app.command(name="generate")
+def cli_generate(
+    commit: bool = typer.Option(
+        False,
+        "--commit",
+        "-c",
+        help="Immediately commit the suggested message if confirmed.",
+    ),
+    api_key: str = typer.Option(
+        ...,  # Ellipsis indicates required if not provided by envvar
+        hidden=True,  # Hide this in --help for security, rely on envvar
+        envvar="DEEPSEEK_API_KEY",
+    ),
+    model: str = typer.Option(
+        "deepseek-reasoner",
+        "--model",
+        "-m",
+        envvar="DEEPSEEK_MODEL",
+        help="DeepSeek model to use.",
+    ),
+):
+    """
+    Generates a Conventional Commit message from staged Git changes.
+    """
 
     diff = get_diff()
 
     if not diff.strip():
-        # Only print status if there's no diff, otherwise it pollutes the output
-        sys.stderr.write(
-            "INFO: No staged changes found. Commit message will be empty.\n"
-        )
-        # Exit silently so the hook doesn't necessarily abort the commit if it's fine to proceed
-        # but in a pre-commit context, often you want to abort if there's no diff.
-        # We rely on the shell script to check the final output.
-        print("")  # Print empty string to STDOUT
-        exit(0)
+        typer.echo("INFO: No staged changes found. Commit message will be empty.")
+        raise typer.Exit(code=0)
 
-    commit_message = generate_message(diff)
+    # Generate message
+    commit_message = generate_message(diff, api_key, model)
 
-    # Print the final, clean message to STDOUT for the hook to capture
-    print(commit_message)
+    if not commit_message:
+        raise typer.Exit(code=1)
 
-    # 3. Explicitly close the session's underlying connections when done
-    SESSION.close()
+    typer.echo("\n" + "=" * 50)
+    typer.echo("Suggested Commit Message:")
+    typer.echo(commit_message)
+    typer.echo("=" * 50 + "\n")
+
+    if commit:
+        # Interactive confirmation
+        confirm = typer.confirm("Do you want to use this message to commit?")
+        if confirm:
+            try:
+                # Use Git to commit the message
+                subprocess.run(["git", "commit", "-m", commit_message], check=True)
+                typer.echo(
+                    typer.style("Commit successful!", fg=typer.colors.GREEN, bold=True)
+                )
+            except subprocess.CalledProcessError:
+                typer.echo(
+                    "Error: Git commit failed. Check status for details.", err=True
+                )
+                raise typer.Exit(code=1)
+        else:
+            typer.echo("Commit aborted by user.")
+            raise typer.Exit()
+    else:
+        typer.echo("Message generated. Run with '-c' to commit automatically.")
+
+
+if __name__ == "__main__":
+    # Load .env file variables before running the application
+    load_dotenv(override=True)
+    try:
+        app()
+    finally:
+        SESSION.close()
