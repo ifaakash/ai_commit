@@ -68,7 +68,7 @@ def install_hook():
 
         typer.echo(
             typer.style(
-                f"\n✅ Successfully installed hook in {hook_path}",
+                f"\nSuccessfully installed hook in {hook_path}",
                 fg=typer.colors.GREEN,
                 bold=True,
             )
@@ -78,7 +78,7 @@ def install_hook():
     except subprocess.CalledProcessError:
         typer.echo(
             typer.style(
-                "❌ ERROR: Not in a Git repository. Installation aborted.",
+                "ERROR: Not in a Git repository. Installation aborted.",
                 fg=typer.colors.RED,
             ),
             err=True,
