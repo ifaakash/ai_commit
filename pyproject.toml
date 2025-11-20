@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aicommitter"
-version = "0.0.3"
+version = "0.0.4"
 description = "AI powered commit message helper"
 authors = [{name = "ifaakash"}]
 requires-python = ">=3.11"
-readme = "README_POST_INSTALL.txt"
+readme = "README_POST_INSTALL.md"
 license = {text = "MIT"}
 
 dependencies = [

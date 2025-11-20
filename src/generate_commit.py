@@ -46,6 +46,29 @@ exit 0
 """
 
 
+def get_readme(filepath: str = "docs.md") -> str:
+    """Read the docs.md and return to user"""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return typer.style(
+            f"Error: Documentation file '{filepath}' not found in the current directory.",
+            fg=typer.colors.REDs,
+        )
+    except Exception as e:
+        return typer.style(
+            f"Error reading documentation file: {e}", fg=typer.colors.RED
+        )
+
+
+@app.command(name="docs")
+def show_docs():
+    """Displays the full project documentation from README.md"""
+    readme_content = get_readme()
+    typer.echo(typer.style(f"\n{readme_content}", fg=typer.colors.GREEN, italic=True))
+
+
 @app.command(name="install")
 def install_hook():
     """Installs the prepare-commit-msg hook in the current Git repository."""
