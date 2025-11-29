@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+COMMIT_MSG_FILE=$1
+echo "--- Prepare-Commit-Message Hook Triggered ---" > /dev/tty
+cd "$(git rev-parse --show-toplevel)" || exit 1
+EXISTING_MSG=$(grep -v '^#' "$COMMIT_MSG_FILE" | head -n 1 | tr -d '[:space:]')
+if [[ -n "$EXISTING_MSG" ]]; then
+    echo "INFO: User provided an existing message. Skipping AI generation." > /dev/tty
+    exit 0
+fi
+set -e
+GENERATED_MSG=$(aicommitter generate)
+set +e
+if [[ -z "$(echo "$GENERATED_MSG" | tr -d '[:space:]')" ]]; then
+    echo "ERROR: Generated message is empty. Manual edit required." > /dev/tty
+    exit 1
+fi
+echo "$GENERATED_MSG" > "$COMMIT_MSG_FILE"
+echo "INFO: Successfully generated and set the commit message." > /dev/tty
+echo "--- Generated Message ---" > /dev/tty
+echo "$GENERATED_MSG" > /dev/tty
+echo "-------------------------" > /dev/tty
+exit 0
