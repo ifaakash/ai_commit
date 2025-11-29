@@ -4,12 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aicommitter"
-version = "0.0.4"
+version = "1.0.0"
 description = "AI powered commit message helper"
 authors = [{name = "ifaakash"}]
-requires-python = ">=3.11"
-readme = "README_POST_INSTALL.md"
+requires-python = ">=3.7.9"
+readme = "docs.md"
 license = {text = "MIT"}
+keywords = ["git", "commit", "ai", "devops", "cli", "commit message"]
 
 dependencies = [
   "typer[all]>=0.9.0",
@@ -18,4 +19,10 @@ dependencies = [
 ]
 
 [project.scripts]
-aicommitter = "generate_commit:app"
+aicommitter = "aicommitter.updated_generate:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+aicommitter = ["docs.md"]

@@ -1,6 +1,8 @@
+import importlib.resources
 import os
 import subprocess
 import sys
+from pathlib import Path
 from subprocess import DEVNULL
 
 import requests
@@ -46,26 +48,52 @@ exit 0
 """
 
 
-def get_readme(filepath: str = "docs.md") -> str:
-    """Read the docs.md and return to user"""
+# def get_readme(filepath: str = "docs.md") -> str:
+#     """Read the docs.md and return to user"""
+#     try:
+#         with open(filepath, "r", encoding="utf-8") as f:
+#             return f.read()
+#     except FileNotFoundError:
+#         return typer.style(
+#             f"Error: Documentation file '{filepath}' not found in the current directory.",
+#             fg=typer.colors.REDs,
+#         )
+#     except Exception as e:
+#         return typer.style(
+#             f"Error reading documentation file: {e}", fg=typer.colors.RED
+#         )
+
+
+def get_readme_content(filepath: str = "docs.md") -> str:
+    """
+    Reads the content of the README file from the installed Python package resources.
+
+    The file must be bundled within the 'aicommitter' package (e.g., inside src/aicommitter/).
+    """
+
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read()
+        # 1. Try reading the resource from the installed package
+        # Assuming the main package is named 'generate_commit'
+        return importlib.resources.read_text("aicommitter", filepath)
+
     except FileNotFoundError:
+        # 3. If that fails too, inform the user
         return typer.style(
-            f"Error: Documentation file '{filepath}' not found in the current directory.",
-            fg=typer.colors.REDs,
+            f"Error: Documentation file '{filepath}' not found. Please ensure it is either in the project root (dev mode) or packaged as a resource inside the 'aicommitter' package (installed mode).",
+            fg=typer.colors.RED,
         )
     except Exception as e:
+        # Handle other packaging/read errors
         return typer.style(
-            f"Error reading documentation file: {e}", fg=typer.colors.RED
+            f"Error reading documentation file from package resource: {e}",
+            fg=typer.colors.RED,
         )
 
 
 @app.command(name="docs")
 def show_docs():
     """Displays the full project documentation from README.md"""
-    readme_content = get_readme()
+    readme_content = get_readme_content()
     typer.echo(typer.style(f"\n{readme_content}", fg=typer.colors.GREEN, italic=True))
 
 
@@ -202,10 +230,18 @@ def cli_generate(
         "-c",
         help="Immediately commit the suggested message if confirmed.",
     ),
+    # api_key: str = typer.Option(
+    #     ...,  # Ellipsis indicates required if not provided by envvar
+    #     hidden=True,  # Hide this in --help for security, rely on envvar
+    #     envvar="DEEPSEEK_API_KEY",
+    #     help="API key for the provider (DeepSeek or Gemini).",
+    # ),
     api_key: str = typer.Option(
-        ...,  # Ellipsis indicates required if not provided by envvar
-        hidden=True,  # Hide this in --help for security, rely on envvar
-        envvar="DEEPSEEK_API_KEY",
+        False,
+        "--api-key",
+        "-c",
+        hidden=True,
+        help="API key for the provider (DeepSeek or Gemini).",
     ),
     model: str = typer.Option(
         "deepseek-reasoner",
