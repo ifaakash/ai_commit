@@ -1,10 +1,16 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+![Version](https://img.shields.io/badge/version-1.2.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-active-success)
+
+## [ Unreleased ]
+### Added
+- Included the reference to <em>CHANGELOG.md</em> file in <em>README.md</em>
 
 ## [1.0.3]
 ### Changed
-- Updated the version of aicommitter to 1.0.3
+- Updated the version of aicommitter to `1.0.3`
 - Refactored exception handling
 - Increased the session timeout to 180s for DEEPSEEK and GEMINI
 
