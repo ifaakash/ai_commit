@@ -143,15 +143,22 @@ def call_deepseek(diff: str, api_key: str, model: str) -> str:
         "messages": [{"role": "system", "content": prompt}],
         "stream": False,
     }
-    response = SESSION.post(url, headers=headers, json=data, timeout=60)
-    response.raise_for_status()
-    return (
-        response.json()
-        .get("choices", [{}])[0]
-        .get("message", {})
-        .get("content", "")
-        .strip()
-    )
+    try:
+        response = SESSION.post(url, headers=headers, json=data, timeout=120)
+        response.raise_for_status()
+        return (
+            response.json()
+            .get("choices", [{}])[0]
+            .get("message", {})
+            .get("content", "")
+            .strip()
+        )
+    except requests.exceptions.Timeout:
+        return "Error: Request timed out after 120 seconds"
+    except requests.exceptions.HTTPError as e:
+        return f"Error: HTTP {e.response.status_code}"
+    except requests.exceptions.RequestException as e:
+        return f"Error: {str(e)}"
 
 
 def call_gemini(diff: str, api_key: str, model: str) -> str:
@@ -172,7 +179,7 @@ def call_gemini(diff: str, api_key: str, model: str) -> str:
     # Gemini payload structure
     data = {"contents": [{"parts": [{"text": prompt}]}]}
 
-    response = SESSION.post(url, headers=headers, json=data, timeout=60)
+    response = SESSION.post(url, headers=headers, json=data, timeout=120)
 
     # Detailed error handling for Google API
     if response.status_code != 200:
