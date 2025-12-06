@@ -4,7 +4,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/ifaakash/ai_commit)
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
-![Latest Release](https://img.shields.io/badge/Release-1.0.3-orange)
+![Latest Release](https://img.shields.io/badge/Release-1.0.4-orange)
 <!--[![Latest Release](https://img.shields.io/badge/Latest-Release-blue?style=for-the-badge)](https://libraries.io/pypi/aicommitter)-->
 
 ### One-Time Setup
@@ -46,6 +46,10 @@ For every commit after setup:
 See [CHANGELOG.md](CHANGELOG.md) for a [detailed history](https://libraries.io/pypi/aicommitter) of changes
 
 ## Latest Release
+
+**Version 1.0.3** (2025-12-07)
+- Updated the version of aicommitter to `1.0.4`
+- Added support for `long_description` in pypi library
 
 **Version 1.0.3** (2025-12-05)
 - Updated the version of aicommitter to `1.0.3`

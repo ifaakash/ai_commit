@@ -12,6 +12,13 @@
 
 ### Version History
 
+## [1.0.4]
+### Added
+- Support for `long_description` in the pypi package
+
+### Refactored
+- Removed obsolete files
+
 ## [1.0.3]
 ### Added
 - Updated the version of aicommitter to `1.0.3`
