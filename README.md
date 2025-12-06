@@ -4,13 +4,14 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/ifaakash/ai_commit)
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+[![Latest Release](https://img.shields.io/badge/Latest-Release-blue?style=for-the-badge)](https://libraries.io/pypi/aicommitter)
 
  ## Usage Steps:
 
-1. Obtain your API Key:
+1. **Obtain your API Key**  
    Register and get an **API** key from the DeepSeek AI developer dashboard.
 
-2. Set the Environment Variable:
+2. **Set the Environment Variable**  
    Set your key as the **DEEPSEEK_API_KEY** environment variable.
 
    Example (for Linux/macOS):
@@ -20,11 +21,11 @@
    Navigate to the root of any Git project and run the install command:
    `aicommitter install`
 
-4. Commit!
+4. **Commit!**<br>
    Stage your changes:
    `git add .`
 
-   Commit directly with confirmation:
+   ***Commit directly with confirmation***
    `aicommitter generate --commit`
 
 ## Changelog
