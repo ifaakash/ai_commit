@@ -20,20 +20,20 @@
    export DEEPSEEK_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
    ```
 
-3. **Install the Git Hook in your repository**
+3. **Install the Git Hook in your repository**  
    Navigate to the root of any Git project and run the install command<br>
    `aicommitter install`
 
 ### Daily Usage
 For every commit after setup:
 
-4. **Stage your changes**
+4. **Stage your changes**  
    Add all or selected changes to the staging area<br>
    ```bash
    git add .
    ```
 
-5. **Commit!**
+5. **Commit!**  
    Commit directly with confirmation<br>
    ```bash
    aicommitter generate --commit
