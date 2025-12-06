@@ -22,7 +22,9 @@
 
 3. **Install the Git Hook in your repository**  
    Navigate to the root of any Git project and run the install command<br>
-   `aicommitter install`
+   ```bash
+   aicommitter install
+   ```
 
 ### Daily Usage
 For every commit after setup:
