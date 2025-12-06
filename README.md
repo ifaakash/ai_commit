@@ -7,24 +7,24 @@
 
  ## Usage Steps:
 
-1. Obtain your API Key:
+1. Obtain your API Key:<br>
    Register and get an **API** key from the DeepSeek AI developer dashboard.
 
-2. Set the Environment Variable:
+2. Set the Environment Variable:<br>
    Set your key as the **DEEPSEEK_API_KEY** environment variable.
 
-   Example (for Linux/macOS):
+   Example (for Linux/macOS):<br>
    `export DEEPSEEK_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxx"`
 
-3. Install the Git Hook in your repository:
+3. Install the Git Hook in your repository:<br>
    Navigate to the root of any Git project and run the install command:
    `aicommitter install`
 
 4. Commit!
-   Stage your changes:
+   Stage your changes:<br>
    `git add .`
 
-   Commit directly with confirmation:
+   Commit directly with confirmation:<br>
    `aicommitter generate --commit`
 
 ## Changelog
