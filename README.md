@@ -6,6 +6,7 @@
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 ![Latest Release](https://img.shields.io/badge/Release-1.0.4-orange)
 ![PyPi](https://img.shields.io/pypi/v/aicommitter)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/91b5d92dde4d480b9351b0212fbf725f)](https://app.codacy.com/gh/ifaakash/ai_commit/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 <!--[![Latest Release](https://img.shields.io/badge/Latest-Release-blue?style=for-the-badge)](https://libraries.io/pypi/aicommitter)-->
 
 ### One-Time Setup
