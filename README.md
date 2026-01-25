@@ -5,6 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 ![Latest Release](https://img.shields.io/badge/Release-1.0.4-orange)
+![PyPi](https://img.shields.io/pypi/v/aicommitter)
 <!--[![Latest Release](https://img.shields.io/badge/Latest-Release-blue?style=for-the-badge)](https://libraries.io/pypi/aicommitter)-->
 
 ### One-Time Setup
@@ -46,6 +47,20 @@ For every commit after setup:
 See [CHANGELOG.md](CHANGELOG.md) for a [detailed history](https://libraries.io/pypi/aicommitter) of changes
 
 ## Latest Release
+
+**Version 1.0.6** (2026-01-25)
+- Updated the version of aicommitter to `1.0.6`
+- Fixed the issue of `NotOpenSSLWarning` warning
+
+**Version 1.0.5** (2026-01-25)
+- Updated the version of aicommitter to `1.0.5`
+- Fixed the issue of `docs.md` file not being found
+- Fixed the timeout issue
+- Swtiched to `deepseek-chat` model from `deepseek-reasoner` model
+
+**Version 1.0.4** (2025-12-07)
+- Updated the version of aicommitter to `1.0.4`
+- Added support for `long_description` in pypi library
 
 **Version 1.0.4** (2025-12-07)
 - Updated the version of aicommitter to `1.0.4`

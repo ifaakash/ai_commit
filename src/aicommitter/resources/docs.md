@@ -1,5 +1,3 @@
-Follow below commands to make this work
-
 STEP 1:
 Depending on you LLM agent, set the API key
 
@@ -8,15 +6,12 @@ export DEEPSEEK_API_KEY="sk-..."
 export GEMINI_API_KEY="sk-..."
 
 STEP 2:
-alias aicommitter="aicommit"
-
-STEP 3:
 aicommit install
 
-STEP 4:
+STEP 3:
 git add .
 
-STEP 5:
+STEP 4:
 aicommit generate --commit
 
 ==========================================
