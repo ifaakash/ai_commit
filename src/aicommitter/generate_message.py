@@ -11,12 +11,16 @@ import typer
 from rich import print
 from rich.panel import Panel
 from dotenv import load_dotenv
+import warnings
+from urllib3.exceptions import NotOpenSSLWarning
 
 load_dotenv(override=True)
 
 app = typer.Typer(
     help="AI Commit Message Generator. Reads staged Git diff and suggests a message"
 )
+
+warnings.filterwarnings("ignore", category=NotOpenSSLWarning)
 
 SESSION = requests.Session()
 retries = Retry(

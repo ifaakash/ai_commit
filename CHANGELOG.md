@@ -12,6 +12,16 @@
 
 ### Version History
 
+## [1.0.6]
+### Fixed
+- Fixed the issue of `NotOpenSSLWarning` warning
+
+## [1.0.5]
+### Fixed
+- Fixed the issue of `docs.md` file not being found
+- Fixed the timeout issue
+- Swtiched to `deepseek-chat` model from `deepseek-reasoner` model
+
 ## [1.0.4]
 ### Added
 - Support for `long_description` in the pypi package
