@@ -1,13 +1,15 @@
-import importlib.resources
 import os
 import subprocess
-import sys
 from enum import Enum
-from pathlib import Path
 from subprocess import DEVNULL
+from importlib import resources
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import typer
+from rich import print
+from rich.panel import Panel
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -17,8 +19,12 @@ app = typer.Typer(
 )
 
 SESSION = requests.Session()
+retries = Retry(
+    total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]
+)
+SESSION.mount("https://", HTTPAdapter(max_retries=retries))
 
-DEFAULT_DEEPSEEK_MODEL = "deepseek-reasoner"
+DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
 DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"
 
 HOOK_SCRIPT_CONTENT = """#!/usr/bin/env bash
@@ -50,24 +56,32 @@ class AIProvider(str, Enum):
     DEEPSEEK = "deepseek"
     GEMINI = "gemini"
 
-
-def get_readme_content(filepath: str = "docs.md") -> str:
-    try:
-        return importlib.resources.read_text("aicommitter", filepath)
-    except FileNotFoundError:
-        return typer.style(
-            f"Error: Documentation file '{filepath}' not found.",
-            fg=typer.colors.RED,
-        )
-    except Exception as e:
-        return typer.style(f"Error reading docs: {e}", fg=typer.colors.RED)
-
+def get_readme_content(filename: str = "docs.md") -> str:
+    return (
+        resources
+        .files("aicommitter.resources")
+        .joinpath(filename)
+        .read_text()
+    )
 
 @app.command(name="docs")
 def show_docs():
-    readme_content = get_readme_content()
-    typer.echo(typer.style(f"\n{readme_content}", fg=typer.colors.GREEN, italic=True))
+    try:
+        content = get_readme_content()
 
+        print(
+            Panel(
+                content,
+                title="aicommitter docs",
+                border_style="green",
+            )
+        )
+
+    except FileNotFoundError:
+        print("[bold red]Error:[/bold red] Documentation file not found.")
+
+    except Exception as e:
+        print(f"[bold red]Error reading docs:[/bold red] {e}")
 
 @app.command(name="install")
 def install_hook():

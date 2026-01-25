@@ -25,4 +25,4 @@ aicommitter = "aicommitter.generate_message:app"
 where = ["src"]
 
 [tool.setuptools.package-data]
-aicommitter = ["README.md"]
+aicommitter = ["resources/*.md"]
