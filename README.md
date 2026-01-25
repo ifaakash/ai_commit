@@ -62,6 +62,10 @@ See [CHANGELOG.md](CHANGELOG.md) for a [detailed history](https://libraries.io/p
 - Updated the version of aicommitter to `1.0.4`
 - Added support for `long_description` in pypi library
 
+**Version 1.0.4** (2025-12-07)
+- Updated the version of aicommitter to `1.0.4`
+- Added support for `long_description` in pypi library
+
 **Version 1.0.3** (2025-12-05)
 - Updated the version of aicommitter to `1.0.3`
 - Refactored exception handling
